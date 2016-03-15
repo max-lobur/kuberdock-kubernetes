@@ -401,7 +401,7 @@ Kubernetes services for node host
 
 %prep
 %setup -qn %{name}-%{version}
-%patch0 -p1
+# %patch0 -p1
 
 
 %build

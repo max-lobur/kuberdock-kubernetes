@@ -54,7 +54,7 @@ Source12: kubelet
 Source13: proxy
 Source14: scheduler
 
-Patch0: kuberdock-1.1.3.patch
+# Patch0: kuberdock-1.1.3.patch
 
 Requires: %{name}-master = %{epoch}:%{version}-%{release}
 Requires: %{name}-node = %{epoch}:%{version}-%{release}

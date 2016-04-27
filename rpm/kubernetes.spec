@@ -31,7 +31,7 @@
 %global con_commit          81f6fc52617bf1cf02680f1a768b019ddf16c42b
 %global con_shortcommit     %(c=%{con_commit}; echo ${c:0:7})
 
-%global kube_version          1.2.1
+%global kube_version          1.2.4
 %global kube_git_version      v%{kube_version}
 
 #I really need this, otherwise "version_ldflags=$(kube::version_ldflags)"
@@ -625,6 +625,9 @@ getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu May 19 2016 Max Lobur <mlobur@cloudlinux.com> - 1.2.4-1.cloudlinux
+- update to 1.2.4
+
 * Mon Apr 04 2016 Sergey Fokin <sfokin@cloudlinux.com> - 1.2.1-1.cloudlinux
 - update to 1.2.1
 - add contrib form 81f6fc52617bf1cf02680f1a768b019ddf16c42b commit

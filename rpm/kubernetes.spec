@@ -41,7 +41,7 @@
 
 Name:		kubernetes
 Version:	%{kube_version}
-Release:	1%{?dist}.cloudlinux
+Release:	2%{?dist}.cloudlinux
 Epoch:      1
 Summary:    Container cluster management
 License:    ASL 2.0
@@ -625,6 +625,9 @@ getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Jun 06 2016 Max Lobur <mlobur@cloudlinux.com> - 1.2.4-2.cloudlinux
+- add non-floating ip feature support
+
 * Thu May 19 2016 Max Lobur <mlobur@cloudlinux.com> - 1.2.4-1.cloudlinux
 - update to 1.2.4
 

@@ -458,7 +458,7 @@ func NewMainKubelet(
 	klet.imageManager = imageManager
 
 	klet.runner = klet.containerRuntime
-	klet.statusManager = status.NewManager(klet.kdHookPlugin, kubeClient, klet.podManager)
+	klet.statusManager = status.NewManager(kubeClient, klet.podManager)
 
 	klet.probeManager = prober.NewManager(
 		klet.statusManager,

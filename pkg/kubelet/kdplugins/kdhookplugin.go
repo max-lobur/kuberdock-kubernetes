@@ -1,8 +1,12 @@
 package kdplugins
 
 import (
+	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -20,6 +24,7 @@ func (p *KDHookPlugin) OnContainerCreatedInPod(container *api.Container, pod *ap
 }
 
 const fsLimitPath string = "/var/lib/kuberdock/scripts/fslimit.py"
+const kdConfPath string = "/usr/libexec/kubernetes/kubelet-plugins/net/exec/kuberdock/kuberdock.json"
 
 type volumeSpec struct {
 	Path string  `json:"path"`
@@ -55,13 +60,71 @@ func getVolumeSpecs(pod *api.Pod) []volumeSpec {
 	return nil
 }
 
-// Get publicIP from pod labels
-// Return publicIP as string or empty string
-func getPublicIP(pod *api.Pod) string {
-	if publicIP, ok := pod.Labels["kuberdock-public-ip"]; ok {
-		return publicIP
+type settings struct {
+	NonFloatingFublicIPs string `json:"nonfloating_public_ips"`
+	Master               string `json:"master"`
+	Node                 string `json:"node"`
+	Token                string `json:"token"`
+}
+
+type kdResponse struct {
+	Status string `json:"status"`
+	Data   string `json:"data"`
+}
+
+// Call KuberDock API to get free publicIP for this node.
+// Return publicIP as string and error as nil
+// or empty string with error if can't get one.
+func getNonFloatingIP(pod *api.Pod) (string, error) {
+	file, err := ioutil.ReadFile(kdConfPath)
+	if err != nil {
+		return "", fmt.Errorf("File error: %v\n", err)
 	}
-	return ""
+	var s settings
+	if err := json.Unmarshal(file, &s); err != nil {
+		return "", fmt.Errorf("Error while try to parse json(%s): %q", file, err)
+	}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	url := fmt.Sprintf("https://%s/api/ippool/get-public-ip/%s/%s?token=%s", s.Master, s.Node, pod.Namespace, s.Token)
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("Error while http.get: %q", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("Error while read response body: %q", err)
+	}
+	var kdResp kdResponse
+	if err := json.Unmarshal([]byte(body), &kdResp); err != nil {
+		return "", fmt.Errorf("Error while try to parse json(%s): %q", body, err)
+	}
+	if kdResp.Status == "OK" {
+		glog.V(4).Infof("Found publicIP: %s", kdResp.Data)
+		return kdResp.Data, nil
+	}
+	return "", fmt.Errorf("Can't get publicIP, because of %s", kdResp.Data)
+}
+
+// Get publicIP from pod labels or acquire non-floating IP.
+// Return publicIP as string and error nil
+// or empty string with error, if can't get one
+func getPublicIP(pod *api.Pod) (string, error) {
+	publicIP, ok := pod.Labels["kuberdock-public-ip"]
+	if !ok {
+		return "", errors.New("No kuberdock-public-ip label found")
+	}
+	if publicIP != "true" {
+		return publicIP, nil
+	}
+	publicIP, err := getNonFloatingIP(pod)
+	if err != nil {
+		return "", err
+	}
+	return publicIP, nil
 }
 
 func (p *KDHookPlugin) OnPodRun(pod *api.Pod) {
@@ -69,7 +132,7 @@ func (p *KDHookPlugin) OnPodRun(pod *api.Pod) {
 	if specs := getVolumeSpecs(pod); specs != nil {
 		processLocalStorages(specs)
 	}
-	if publicIP := getPublicIP(pod); publicIP != "" {
+	if publicIP, err := getPublicIP(pod); err == nil {
 		handlePublicIP("add", publicIP)
 	}
 }
@@ -157,8 +220,8 @@ func applyFSLimits(spec volumeSpec) error {
 func (p *KDHookPlugin) OnPodKilled(pod *api.Pod) {
 	if pod != nil {
 		glog.V(4).Infof(">>>>>>>>>>> Pod %q killed", pod.Name)
-		if publicIP := getPublicIP(pod); publicIP != "" {
-			handlePublicIP("add", publicIP)
+		if publicIP, err := getPublicIP(pod); err == nil {
+			handlePublicIP("del", publicIP)
 		}
 	}
 }

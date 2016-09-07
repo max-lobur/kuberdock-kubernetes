@@ -346,8 +346,8 @@ type KubeletConfiguration struct {
 type KubeSchedulerConfiguration struct {
 	unversioned.TypeMeta
 
-	// enable kuberdock non-floating ips logic
-	NonFloatingIPEnabled bool `json:nonFloatingIPEnabled`
+	// enable kuberdock fixed ip pools logic
+	FixedIPPoolsEnabled bool `json:fixedIPPoolsEnabled`
 	// port is the port that the scheduler's http service runs on.
 	Port int `json:"port"`
 	// address is the IP address to serve on.

@@ -85,7 +85,7 @@ func defaultPredicates() sets.String {
 		factory.RegisterFitPredicateFactory(
 			"PodFitsFreeIPs",
 			func(args factory.PluginFactoryArgs) algorithm.FitPredicate {
-				return predicates.NewPublicIPFitPredicate(args.NonFloatingIPEnabled, args.NodeInfo)
+				return predicates.NewPublicIPFitPredicate(args.FixedIPPoolsEnabled, args.NodeInfo)
 			},
 		),
 		// Fit is defined based on the absence of port conflicts.

@@ -106,10 +106,10 @@ func Run(s *options.SchedulerServer) error {
 		glog.Fatal(server.ListenAndServe())
 	}()
 
-	configFactory := factory.NewConfigFactory(kubeClient, s.NonFloatingIPEnabled, s.SchedulerName)
+	configFactory := factory.NewConfigFactory(kubeClient, s.FixedIPPoolsEnabled, s.SchedulerName)
 	config, err := createConfig(s, configFactory)
 	config.Client = kubeClient
-	config.NonFloatingIPEnabled = s.NonFloatingIPEnabled
+	config.FixedIPPoolsEnabled = s.FixedIPPoolsEnabled
 	if err != nil {
 		glog.Fatalf("Failed to create scheduler configuration: %v", err)
 	}

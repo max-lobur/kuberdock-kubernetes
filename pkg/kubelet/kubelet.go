@@ -31,6 +31,7 @@ import (
 	"sync"
 	"time"
 
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/golang/glog"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorapiv2 "github.com/google/cadvisor/info/v2"
@@ -52,6 +53,7 @@ import (
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockertools"
 	"k8s.io/kubernetes/pkg/kubelet/envvars"
+	"k8s.io/kubernetes/pkg/kubelet/kdplugins"
 	"k8s.io/kubernetes/pkg/kubelet/metrics"
 	"k8s.io/kubernetes/pkg/kubelet/network"
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
@@ -224,6 +226,7 @@ func NewMainKubelet(
 	if resyncInterval <= 0 {
 		return nil, fmt.Errorf("invalid sync frequency %d", resyncInterval)
 	}
+	origDockerClient := dockerClient.(*docker.Client)
 	dockerClient = dockertools.NewInstrumentedDockerInterface(dockerClient)
 
 	serviceStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
@@ -290,6 +293,7 @@ func NewMainKubelet(
 	}
 
 	klet := &Kubelet{
+		kdHookPlugin:                   kdplugins.NewKDHookPlugin(origDockerClient),
 		resourceMultipliers:            resourceMultipliers,
 		hostname:                       hostname,
 		nodeName:                       nodeName,
@@ -386,6 +390,7 @@ func NewMainKubelet(
 	case "docker":
 		// Only supported one for now, continue.
 		klet.containerRuntime = dockertools.NewDockerManager(
+			klet.kdHookPlugin,
 			resourceMultipliers,
 			dockerClient,
 			kubecontainer.FilterEventRecorder(recorder),
@@ -531,6 +536,7 @@ type nodeLister interface {
 
 // Kubelet is the main kubelet implementation.
 type Kubelet struct {
+	kdHookPlugin        *kdplugins.KDHookPlugin
 	resourceMultipliers api.ResourceMultipliers
 	hostname            string
 	nodeName            string

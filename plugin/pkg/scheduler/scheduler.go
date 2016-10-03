@@ -73,8 +73,8 @@ type Scheduler struct {
 
 type Config struct {
 	Client *client.Client
-	// Enable kuberdock non-floating ip logic
-	NonFloatingIPEnabled bool
+	// Enable kuberdock fixed ip pools logic
+	FixedIPPoolsEnabled bool
 	// It is expected that changes made via modeler will be observed
 	// by NodeLister and Algorithm.
 	Modeler    SystemModeler
@@ -110,8 +110,8 @@ func New(c *Config) *Scheduler {
 
 // Run begins watching and scheduling. It starts a goroutine and returns immediately.
 func (s *Scheduler) Run() {
-	if s.config.NonFloatingIPEnabled {
-		glog.V(0).Infoln("Scheduler running in non-floating ip mode")
+	if s.config.FixedIPPoolsEnabled {
+		glog.V(0).Infoln("Scheduler running in fixed ip pools mode")
 	}
 	go wait.Until(s.scheduleOne, 0, s.config.StopEverything)
 }
@@ -157,7 +157,7 @@ func (s *Scheduler) scheduleOne() {
 		s.config.Modeler.AssumePod(&assumed)
 	})
 
-	if s.config.NonFloatingIPEnabled && api.IsKDPublicIPNeededFromLabels(pod.GetLabels()) {
+	if s.config.FixedIPPoolsEnabled && api.IsKDPublicIPNeededFromLabels(pod.GetLabels()) {
 		if err := s.increaseKDNodePublicIPCount(pod, dest, -1); err != nil {
 			glog.Errorf("Changing node %q public ip count failed: %+v", dest, err)
 		}

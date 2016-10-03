@@ -33,15 +33,15 @@ import (
 
 // PluginFactoryArgs are passed to all plugin factory functions.
 type PluginFactoryArgs struct {
-	NonFloatingIPEnabled bool
-	PodLister        algorithm.PodLister
-	ServiceLister    algorithm.ServiceLister
-	ControllerLister algorithm.ControllerLister
-	ReplicaSetLister algorithm.ReplicaSetLister
-	NodeLister       algorithm.NodeLister
-	NodeInfo         predicates.NodeInfo
-	PVInfo           predicates.PersistentVolumeInfo
-	PVCInfo          predicates.PersistentVolumeClaimInfo
+	FixedIPPoolsEnabled bool
+	PodLister           algorithm.PodLister
+	ServiceLister       algorithm.ServiceLister
+	ControllerLister    algorithm.ControllerLister
+	ReplicaSetLister    algorithm.ReplicaSetLister
+	NodeLister          algorithm.NodeLister
+	NodeInfo            predicates.NodeInfo
+	PVInfo              predicates.PersistentVolumeInfo
+	PVCInfo             predicates.PersistentVolumeClaimInfo
 }
 
 // A FitPredicateFactory produces a FitPredicate from the given args.

@@ -461,6 +461,13 @@ func extractTar(archive backupArchive, dest string) error {
 			}
 		}
 
+		if err := os.Chown(path, header.Uid, header.Gid); err != nil {
+			return err
+		}
+
+		if err := os.Chmod(path, mode); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -22,21 +22,23 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/pkg/api"
+	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 )
 
 // KDHookPlugin incapsulates various hooks needed for KuberDock
 type KDHookPlugin struct {
 	dockerClient *docker.Client
 	settings     settings
+	kubeClient   clientset.Interface
 }
 
-func NewKDHookPlugin(dockerClient *docker.Client) *KDHookPlugin {
+func NewKDHookPlugin(dockerClient *docker.Client, kubeClient clientset.Interface) *KDHookPlugin {
 	s, err := getSettings()
 	if err != nil {
 		// TODO: maybe better to just panic in this place
 		glog.Errorf("Can't get config: %+v", err)
 	}
-	return &KDHookPlugin{dockerClient: dockerClient, settings: s}
+	return &KDHookPlugin{dockerClient: dockerClient, settings: s, kubeClient: kubeClient}
 }
 
 // OnContainerCreatedInPod is handler which is responsible for prefilling persisntent volumes wit the contents from folder of docker images they are being mounted to
@@ -660,8 +662,15 @@ func createVolume(spec volumeSpec) error {
 func (p *KDHookPlugin) OnPodKilled(pod *api.Pod) {
 	if pod != nil {
 		glog.V(3).Infof(">>>>>>>>>>> Pod %q killed", pod.Name)
-		if publicIP, err := p.getPublicIP(pod); err == nil {
-			p.handlePublicIP("del", publicIP)
+		pods, err := p.kubeClient.Core().Pods(pod.Namespace).List(api.ListOptions{})
+		if err != nil {
+			glog.Errorf(">>>>>>>>>>> Can't get list of pods: %+v", err)
+			return
+		}
+		if len(pods.Items) == 0 || (len(pods.Items) == 1 && pods.Items[0].Name == pod.Name) {
+			if publicIP, err := p.getPublicIP(pod); err == nil {
+				p.handlePublicIP("del", publicIP)
+			}
 		}
 	}
 }

@@ -405,8 +405,8 @@ func (f *FakeDockerClient) Version() (*docker.Env, error) {
 	return &f.VersionInfo, f.popError("version")
 }
 
-func (f *FakeDockerClient) Info() (*docker.Env, error) {
-	return &f.Information, nil
+func (f *FakeDockerClient) Info() (*docker.DockerInfo, error) {
+	return &docker.DockerInfo{}, nil
 }
 
 func (f *FakeDockerClient) CreateExec(opts docker.CreateExecOptions) (*docker.Exec, error) {

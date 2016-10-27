@@ -213,7 +213,7 @@ func NewDockerManager(
 		glog.Errorf("Failed to execute Info() call to the Docker client: %v", err)
 		glog.Warningf("Using fallback default of /var/lib/docker for location of Docker runtime")
 	} else {
-		dockerRoot = dockerInfo.Get("DockerRootDir")
+		dockerRoot = dockerInfo.DockerRootDir
 		glog.Infof("Setting dockerRoot to %s", dockerRoot)
 	}
 

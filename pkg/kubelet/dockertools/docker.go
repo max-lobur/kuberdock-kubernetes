@@ -68,7 +68,7 @@ type DockerInterface interface {
 	RemoveImage(image string) error
 	Logs(opts docker.LogsOptions) error
 	Version() (*docker.Env, error)
-	Info() (*docker.Env, error)
+	Info() (*docker.DockerInfo, error)
 	CreateExec(docker.CreateExecOptions) (*docker.Exec, error)
 	StartExec(string, docker.StartExecOptions) error
 	InspectExec(id string) (*docker.ExecInspect, error)

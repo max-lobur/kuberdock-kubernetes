@@ -154,7 +154,7 @@ func (in instrumentedDockerInterface) Version() (*docker.Env, error) {
 	return out, err
 }
 
-func (in instrumentedDockerInterface) Info() (*docker.Env, error) {
+func (in instrumentedDockerInterface) Info() (*docker.DockerInfo, error) {
 	const operation = "info"
 	defer recordOperation(operation, time.Now())
 

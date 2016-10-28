@@ -41,7 +41,7 @@
 
 Name:		kubernetes
 Version:	%{kube_version}
-Release:	4%{?dist}.cloudlinux
+Release:	6%{?dist}.cloudlinux
 Epoch:      1
 Summary:    Container cluster management
 License:    ASL 2.0
@@ -625,6 +625,9 @@ getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Oct 28 2016 Aleksandr Skorodumov <askorodumov@cloudlinux.com>- 1.2.4-6.cloudlinux
+- add kuberdock hook plugin
+
 * Fri Sep 30 2016 Pavel Aborilov <paborilov@cloudlinux.com> - 1.2.4-3.cloudlinux
 - add kuberdock hook plugin
 

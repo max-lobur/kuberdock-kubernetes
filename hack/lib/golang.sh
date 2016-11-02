@@ -155,6 +155,7 @@ readonly KUBE_STATIC_LIBRARIES=(
   kube-scheduler
   kube-proxy
   kubectl
+  kube2sky
 )
 
 kube::golang::is_statically_linked_library() {
@@ -435,7 +436,7 @@ kube::golang::build_binaries_for_platform() {
         "${nonstatics[@]:+${nonstatics[@]}}"
     fi
     if [[ "${#statics[@]}" != 0 ]]; then
-      CGO_ENABLED=0 go install -installsuffix cgo "${goflags[@]:+${goflags[@]}}" \
+      CGO_ENABLED=0 godep go install -installsuffix cgo "${goflags[@]:+${goflags[@]}}" \
         -ldflags "${goldflags}" \
         "${statics[@]:+${statics[@]}}"
     fi

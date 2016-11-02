@@ -21,6 +21,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net/http"
@@ -417,8 +418,38 @@ func createEndpointsPodLW(kubeClient *kclient.Client) *kcache.ListWatch {
 	return kcache.NewListWatchFromClient(kubeClient, "pods", kapi.NamespaceAll, kselector.Everything())
 }
 
+func getResolveNames(s *kapi.Service) ([]string, error) {
+	if serializedResolve := s.Annotations["kuberdock-resolve"]; len(serializedResolve) > 0 {
+		var resolve []string
+		if err := json.Unmarshal([]byte(serializedResolve), &resolve); err != nil {
+			return nil, err
+		}
+		return resolve, nil
+	}
+	return nil, errors.New("No annotations found")
+
+}
+
 func (ks *kube2sky) newService(obj interface{}) {
 	if s, ok := obj.(*kapi.Service); ok {
+		if resolve, err := getResolveNames(s); err == nil {
+			for _, key := range resolve {
+				glog.Infof("Adding kuberdock resolve name %s for service %s", key, s.Name)
+				b, err := json.Marshal(getSkyMsg("127.0.0.1", 0))
+				if err != nil {
+					glog.Errorf("Error while try to serialize skymsg: %q", err)
+					continue
+				}
+				recordValue := string(b)
+				recordKey := buildDNSNameString(ks.domain, serviceSubdomain, s.Namespace, key)
+
+				if err := ks.writeSkyRecord(recordKey, recordValue); err != nil {
+					glog.Errorf("Error while try to write resolve to etcd: %q", err)
+					continue
+				}
+			}
+		}
+
 		name := buildDNSNameString(ks.domain, serviceSubdomain, s.Namespace, s.Name)
 		ks.mutateEtcdOrDie(func() error { return ks.addDNS(name, s) })
 	}
@@ -426,6 +457,12 @@ func (ks *kube2sky) newService(obj interface{}) {
 
 func (ks *kube2sky) removeService(obj interface{}) {
 	if s, ok := obj.(*kapi.Service); ok {
+		if resolve, err := getResolveNames(s); err == nil {
+			for _, key := range resolve {
+				recordKey := buildDNSNameString(ks.domain, serviceSubdomain, s.Namespace, key)
+				ks.mutateEtcdOrDie(func() error { return ks.removeDNS(recordKey) })
+			}
+		}
 		name := buildDNSNameString(ks.domain, serviceSubdomain, s.Namespace, s.Name)
 		ks.mutateEtcdOrDie(func() error { return ks.removeDNS(name) })
 	}

@@ -41,7 +41,7 @@
 
 Name:		kubernetes
 Version:	%{kube_version}
-Release:	6%{?dist}.cloudlinux
+Release:	7%{?dist}.cloudlinux
 Epoch:      1
 Summary:    Container cluster management
 License:    ASL 2.0
@@ -625,6 +625,9 @@ getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Oct 28 2016 Aleksandr Skorodumov <askorodumov@cloudlinux.com>- 1.2.4-7.cloudlinux
+- backported from 1.3 abilitiy to enable proxy protocol or choose listener type for ELB via service annotations
+
 * Fri Oct 28 2016 Aleksandr Skorodumov <askorodumov@cloudlinux.com>- 1.2.4-6.cloudlinux
 - add kuberdock hook plugin
 
